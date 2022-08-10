@@ -1,0 +1,27 @@
+
+module "az_aks_cluster_linux" {
+  source                                       = "../modules/az_aks_cluster_linux"
+  # Name of an existing Resource Group
+  rg_name                                      = ""
+  aks_cluster_dns_prefix                       = ""
+  aks_cluster_location                         = "eastus"
+  aks_cluster_http_application_routing_enabled = true
+  # List of CIDR blocks allowed to access the cluster API
+  source_address_prefix                        = ["x.x.x.x/32"]
+  # Public key which should be allowed administrative access to the cluster API
+  ssh_pub_key                                  = file("~/.ssh/id_rsa.pub")
+  # Private key file on disk to use for connectivity
+  ssh_key_file                                 = "~/.ssh/id_rsa"
+  # VM size for Node Pool members
+  vm_size                                      = "Standard_B2s"
+  # Tags for all created resources
+  tags = {
+    owner        = ""
+    OwnerContact = ""
+    TTL          = "DO-NOT-DELETE"
+  }
+}
+
+output "instructions" {
+  value = module.az_aks_cluster_linux.instructions
+}

@@ -1,0 +1,24 @@
+module "az_vm_action_runner" {
+  source          = "../modules/az_vm_linux"
+  rg_name         = "my-rg"
+  nsg_name        = "my-nsg"
+  vnet_name       = "my-vnet"
+  subnet_name     = "my-subnet-default"
+  resource_prefix = "my-linux"
+  ssh_pub_key     = file("~/.ssh/id_rsa.pub")
+  ssh_key_file    = "~/.ssh/id_rsa"
+  vm_size         = "Standard_B2s"
+  tags = {
+    owner        = ""
+    ownerContact = ""
+    TTL          = "DO-NOT-DELETE"
+  }
+  vm_userdata = [
+    "echo hello",
+    "echo hello again"
+  ]
+}
+
+output "ip_address" {
+  value = module.az_vm_action_runner.public_ip_address
+}
