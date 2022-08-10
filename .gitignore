@@ -4,6 +4,11 @@ local*
 .env
 super-linter.log
 
+seed
+modules/ghes_seed
+az_vm_action_runner
+az_vm_windows
+
 # Created by https://www.toptal.com/developers/gitignore/api/terraform,macos,visualstudiocode,windows
 # Edit at https://www.toptal.com/developers/gitignore?templates=terraform,macos,visualstudiocode,windows
 
