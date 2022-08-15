@@ -1,0 +1,83 @@
+
+---
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: arc-org-my-org
+spec:
+  template:
+    spec:
+      organization: my-org
+      labels:
+      - dependabot
+---
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: arc-org-some-other-org
+spec:
+  template:
+    spec:
+      organization: some-other-org
+      labels:
+      - dependabot
+---
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: arc-org-my-org
+spec:
+  scaleDownDelaySecondsAfterScaleOut: 300
+  minReplicas: 1
+  maxReplicas: 10
+  scaleTargetRef:
+    name: arc-org-my-org
+  scaleUpTriggers:
+  - githubEvent:
+      workflowJob:
+        types:
+        - queued
+        status: "queued"
+    amount: 1
+    duration: "5m"
+---
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: arc-org-some-other-org
+spec:
+  scaleDownDelaySecondsAfterScaleOut: 300
+  minReplicas: 1
+  maxReplicas: 10
+  scaleTargetRef:
+    name: arc-org-some-other-org
+  scaleUpTriggers:
+  - githubEvent:
+      workflowJob:
+        types:
+        - queued
+        status: "queued"
+    amount: 1
+    duration: "5m"
+
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: actions-runner-controller-github-webhook-server
+  namespace: actions-runner-system
+  annotations:
+    kubernetes.io/ingress.class: addon-http-application-routing
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /actions-runner-controller-github-webhook-server
+            pathType: Prefix
+            backend:
+              service:
+                name: actions-runner-controller-github-webhook-server
+                port:
+                  number: 80
