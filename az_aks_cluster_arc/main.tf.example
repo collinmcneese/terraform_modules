@@ -1,0 +1,101 @@
+
+locals {
+  GH_ENTERPRISE_URL = "https://FQDN.OF.GHES"
+  # Uses a PAT with properly scoped permissions https://github.com/actions-runner-controller/actions-runner-controller#deploying-using-pat-authentication
+  GH_TOKEN = "TOKEN"
+  GH_ORG_LIST = [
+    "my-org",
+    "some-other-org",
+  ]
+  cluster_arc_version            = "0.25.2"
+  # Name of an existing Resource Group
+  cluster_rg_name                = ""
+  cluster_aks_cluster_dns_prefix = ""
+  cluster_aks_cluster_location   = "eastus"
+  cluster_aks_cluster_name       = ""
+  # List of CIDR blocks allowed to access the cluster API
+  cluster_source_address_prefix  = ["x.x.x.x/32"]
+  # VM size for Node Pool members
+  cluster_vm_size                = "Standard_B2s"
+  # Public key which should be allowed administrative access to the cluster API
+  ssh_pub_key                    = file("~/.ssh/id_rsa.pub")
+  # Private key file on disk to use for connectivity
+  ssh_key_file                   = "~/.ssh/id_rsa"
+  # Tags for all created resources
+  tags = {
+    owner        = ""
+    OwnerContact = ""
+    TTL          = "DO-NOT-DELETE"
+  }
+
+}
+
+module "az_aks_cluster_linux" {
+  source                                       = "../modules/az_aks_cluster_linux"
+  rg_name                                      = local.cluster_rg_name
+  aks_cluster_dns_prefix                       = local.cluster_aks_cluster_dns_prefix
+  aks_cluster_location                         = local.cluster_aks_cluster_location
+  aks_cluster_name                             = local.cluster_aks_cluster_name
+  aks_cluster_http_application_routing_enabled = true
+  source_address_prefix                        = local.cluster_source_address_prefix
+  ssh_pub_key                                  = local.ssh_pub_key
+  ssh_key_file                                 = local.ssh_key_file
+  vm_size                                      = local.cluster_vm_size
+  tags                                         = local.tags
+}
+
+# Configures actions-runner-controller
+resource "null_resource" "arc_configure" {
+  depends_on = [module.az_aks_cluster_linux]
+
+  provisioner "local-exec" {
+    command = <<EOC
+      # Verify dependencies are installed
+      az --version > /dev/null 2>&1 || (echo "Azure CLI not installed" && exit 1)
+      kubectl version > /dev/null 2>&1 || (echo "kubectl not installed" && exit 1)
+
+      az aks get-credentials --overwrite-existing --resource-group ${local.cluster_rg_name} --name ${local.cluster_aks_cluster_name}
+      kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
+      while kubectl get pods --namespace cert-manager | grep " 0/" ; do echo "waiting for cert-manager create" ; sleep 5 ; done
+
+      kubectl create -f https://github.com/actions-runner-controller/actions-runner-controller/releases/download/v${local.cluster_arc_version}/actions-runner-controller.yaml
+      until kubectl get pods --namespace actions-runner-system | grep " 0/" ; do echo "waiting for actions-runner-controller create" ; sleep 5 ; done
+
+      kubectl create secret generic controller-manager -n actions-runner-system --from-literal=github_token='${local.GH_TOKEN}'
+      until kubectl get secrets --namespace actions-runner-system | grep "controller-manager" ; do echo "waiting for secret create" ; sleep 5 ; done
+
+      kubectl set env deploy controller-manager -c manager GITHUB_ENTERPRISE_URL='${local.GH_ENTERPRISE_URL}' --namespace actions-runner-system
+
+      helm repo add actions-runner-controller https://actions-runner-controller.github.io/actions-runner-controller
+      helm upgrade --install --namespace actions-runner-system --create-namespace --wait actions-runner-controller actions-runner-controller/actions-runner-controller --set "githubWebhookServer.enabled=true,githubEnterpriseServerURL='${local.GH_ENTERPRISE_URL}'"
+
+      kubectl apply -f runner_setup/arc-autoscale-webhook.yaml
+    EOC
+  }
+}
+
+# Setup webhook(s) for actions-runner-controller(s)
+resource "null_resource" "arc_configure_github" {
+  depends_on = [
+    module.az_aks_cluster_linux,
+    null_resource.arc_configure,
+  ]
+
+  count = length(local.GH_ORG_LIST)
+
+
+  provisioner "local-exec" {
+    command = <<EOC
+      # Verify dependencies are installed
+      jq --version > /dev/null 2>&1 || (echo "jq not installed" && exit 1)
+      export INGIP=`kubectl get services addon-http-application-routing-nginx-ingress --namespace kube-system -o json | jq -r '.status.loadBalancer.ingress[0].ip'`
+      echo "$${INGIP} $INGIP"
+      curl -sk \
+        -X POST \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: token ${local.GH_TOKEN}" \
+        ${local.GH_ENTERPRISE_URL}/api/v3/orgs/${element(local.GH_ORG_LIST, count.index)}/hooks \
+        -d "{\"name\":\"web\",\"active\":true,\"events\":[\"workflow_job\"],\"config\":{\"url\":\"http://$${INGIP}/actions-runner-controller-github-webhook-server\",\"content_type\":\"json\"}}"
+    EOC
+  }
+}
