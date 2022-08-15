@@ -98,7 +98,7 @@ Usage:
 - run `terraform init`
 - Execute `terraform plan` to confirm there are no errors.
 - Execute `terraform apply` to build the infrastructure.  This will create with module source of [modules/az_aks_cluster_linux](./modules/az_aks_cluster_linux/) along with resources defined locally within [main.tf](./az_aks_cluster_arc/main.tf)
-- Verify that the ARC runners were created and are registered properly to the target Organization(s) and that the webhook(s) status is Active and green.
+- Verify that the ARC runners were created and are registered properly to the target Organization(s) and that the webhook(s) status is Active without errors.
 - Execute `terraform destroy` when completed to clean-up any resources created.
 
 ---
