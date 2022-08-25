@@ -72,6 +72,19 @@ Usage:
 
 The [az_aks_cluster_linux](./az_aks_cluster_linux) module requires that an Azure Resource Group is already created.  Use the [az_resource_group](#az_resource_group) module to create a Resource Group, if needed.
 
+  ```mermaid
+  graph
+  subgraph Azure Resource Group
+    subgraph AKS
+      n(NodePool)
+    end
+  end
+
+  %% apply styling
+  classDef blue fill:#096bde
+  class Virtual-Network,AKS blue
+  ```
+
 Usage:
 
 - Perform work from the [az_aks_cluster_linux](./az_aks_cluster_linux) top-level directory.
@@ -87,6 +100,28 @@ Usage:
 ### az_aks_cluster_arc
 
 The [az_aks_cluster_arc](#az_aks_cluster_arc) is used to build an Azure Managed Kubernetes Service cluster and then deploy [Actions Runner Controller](https://github.com/actions-runner-controller/actions-runner-controller)(ARC).  This example will create an ARC deployment and register a Webhook on the target Organization(s).
+
+  ```mermaid
+  graph
+  subgraph AKS
+    subgraph NodePool
+      arc1(Arc Pod org1)
+      arc2(Arc Pod org2)
+      arcx(Arc Pod orgX)
+      wh(Webhook Service)
+    end
+  end
+
+  subgraph GHES
+    org1 & org2 & orgX -. webhook .-> wh
+    arc1
+    arc2
+    arcx
+  end
+  %% apply styling
+  classDef blue fill:#096bde
+  class NodePool blue
+  ```
 
 Usage:
 
