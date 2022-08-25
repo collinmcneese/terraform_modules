@@ -1,56 +1,27 @@
+%{ for org in org_list ~}
+---
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: arc-org-${org}
+spec:
+  template:
+    spec:
+      organization: ${org}
+      labels:
+      - dependabot
 
 ---
 apiVersion: actions.summerwind.dev/v1alpha1
-kind: RunnerDeployment
-metadata:
-  name: arc-org-my-org
-spec:
-  template:
-    spec:
-      organization: my-org
-      labels:
-      - dependabot
----
-apiVersion: actions.summerwind.dev/v1alpha1
-kind: RunnerDeployment
-metadata:
-  name: arc-org-some-other-org
-spec:
-  template:
-    spec:
-      organization: some-other-org
-      labels:
-      - dependabot
----
-apiVersion: actions.summerwind.dev/v1alpha1
 kind: HorizontalRunnerAutoscaler
 metadata:
-  name: arc-org-my-org
+  name: arc-org-${org}
 spec:
   scaleDownDelaySecondsAfterScaleOut: 300
-  minReplicas: 1
-  maxReplicas: 10
+  minReplicas: ${minReplicas}
+  maxReplicas: ${maxReplicas}
   scaleTargetRef:
-    name: arc-org-my-org
-  scaleUpTriggers:
-  - githubEvent:
-      workflowJob:
-        types:
-        - queued
-        status: "queued"
-    amount: 1
-    duration: "5m"
----
-apiVersion: actions.summerwind.dev/v1alpha1
-kind: HorizontalRunnerAutoscaler
-metadata:
-  name: arc-org-some-other-org
-spec:
-  scaleDownDelaySecondsAfterScaleOut: 300
-  minReplicas: 1
-  maxReplicas: 10
-  scaleTargetRef:
-    name: arc-org-some-other-org
+    name: arc-org-${org}
   scaleUpTriggers:
   - githubEvent:
       workflowJob:
@@ -60,7 +31,7 @@ spec:
     amount: 1
     duration: "5m"
 
-
+%{ endfor ~}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

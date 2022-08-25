@@ -17,6 +17,10 @@ locals {
   cluster_source_address_prefix  = ["x.x.x.x/32"]
   # VM size for Node Pool members
   cluster_vm_size                = "Standard_B2s"
+  # Min and max counts for runner pods
+  #  Min should be >= 1 and <= max
+  cluster_min_replicas          = 1
+  cluster_max_replicas          = 10
   # Public key which should be allowed administrative access to the cluster API
   ssh_pub_key                    = file("~/.ssh/id_rsa.pub")
   # Private key file on disk to use for connectivity
@@ -27,7 +31,6 @@ locals {
     OwnerContact = ""
     TTL          = "DO-NOT-DELETE"
   }
-
 }
 
 module "az_aks_cluster_linux" {
@@ -68,8 +71,30 @@ resource "null_resource" "arc_configure" {
 
       helm repo add actions-runner-controller https://actions-runner-controller.github.io/actions-runner-controller
       helm upgrade --install --namespace actions-runner-system --create-namespace --wait actions-runner-controller actions-runner-controller/actions-runner-controller --set "githubWebhookServer.enabled=true,githubEnterpriseServerURL='${local.GH_ENTERPRISE_URL}'"
+    EOC
+  }
+}
 
-      kubectl apply -f runner_setup/arc-autoscale-webhook.yaml
+# Create deployment file from template
+resource "local_file" "kubectl_deployment_file" {
+    content  = templatefile("./deployment.tftpl", {
+      org_list    = local.GH_ORG_LIST,
+      minReplicas = local.cluster_min_replicas,
+      maxReplicas = local.cluster_max_replicas,
+    })
+    filename = "./runner_setup/deployment.yaml"
+}
+
+# Apply deployment file with kubectl
+resource "null_resource" "kubectl_deployment" {
+  depends_on = [
+    module.az_aks_cluster_linux,
+    local_file.kubectl_deployment_file,
+    ]
+
+  provisioner "local-exec" {
+    command = <<EOC
+      kubectl apply -f ./runner_setup/deployment.yaml
     EOC
   }
 }
@@ -79,6 +104,7 @@ resource "null_resource" "arc_configure_github" {
   depends_on = [
     module.az_aks_cluster_linux,
     null_resource.arc_configure,
+    null_resource.kubectl_deployment,
   ]
 
   count = length(local.GH_ORG_LIST)
