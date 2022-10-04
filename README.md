@@ -2,6 +2,8 @@
 
 Compilation of Terraform modules used for different tasks.
 
+The contents of this repository are for EXAMPLE PURPOSE ONLY and should not be used in an an environment without prior user validation and testing.
+
 - [Terraform Modules](#terraform-modules)
   - [Requirements](#requirements)
   - [Modules Included](#modules-included)
