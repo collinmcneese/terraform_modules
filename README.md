@@ -9,10 +9,10 @@ The contents of this repository are for EXAMPLE PURPOSE ONLY and should not be u
   - [Modules Included](#modules-included)
   - [Other Examples](#other-examples)
   - [Usage](#usage)
-    - [az_resource_group](#az_resource_group)
-    - [az_aks_cluster_linux](#az_aks_cluster_linux)
-    - [az_aks_cluster_arc](#az_aks_cluster_arc)
-    - [az_vm_linux](#az_vm_linux)
+    - [Azure Resource Group - az_resource_group](#azure-resource-group---az_resource_group)
+    - [Azure AKS Cluster (Linux) - az_aks_cluster_linux](#azure-aks-cluster-linux---az_aks_cluster_linux)
+    - [Azure AKS Cluster Actions Runner Controller (ARC) - az_aks_cluster_arc](#azure-aks-cluster-actions-runner-controller-arc---az_aks_cluster_arc)
+    - [Azure Virtual Machine (Linux) - az_vm_linux](#azure-virtual-machine-linux---az_vm_linux)
 
 ## Requirements
 
@@ -33,7 +33,7 @@ The contents of this repository are for EXAMPLE PURPOSE ONLY and should not be u
 
 ## Usage
 
-### az_resource_group
+### Azure Resource Group - az_resource_group
 
 Resources Created:
 
@@ -70,7 +70,7 @@ Usage:
 
 ---
 
-### az_aks_cluster_linux
+### Azure AKS Cluster (Linux) - az_aks_cluster_linux
 
 The [az_aks_cluster_linux](./az_aks_cluster_linux) module requires that an Azure Resource Group is already created.  Use the [az_resource_group](#az_resource_group) module to create a Resource Group, if needed.
 
@@ -99,7 +99,7 @@ Usage:
 
 ---
 
-### az_aks_cluster_arc
+### Azure AKS Cluster Actions Runner Controller (ARC) - az_aks_cluster_arc
 
 The [az_aks_cluster_arc](#az_aks_cluster_arc) is used to build an Azure Managed Kubernetes Service cluster and then deploy [Actions Runner Controller](https://github.com/actions-runner-controller/actions-runner-controller)(ARC).  This example will create an ARC deployment and register a Webhook on the target Organization(s).
 
@@ -142,7 +142,7 @@ Usage:
 
 ---
 
-### az_vm_linux
+### Azure Virtual Machine (Linux) - az_vm_linux
 
 The [az_vm_linux](./az_vm_linux) module requires that an Azure Resource Group is already created.  Use the [az_resource_group](#az_resource_group) module to create a Resource Group, if needed.
 
