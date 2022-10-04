@@ -1,5 +1,6 @@
 
 locals {
+  # Currently this module only works with GitHub Enterprise Server (GHES)
   GH_ENTERPRISE_URL = "https://FQDN.OF.GHES"
   # Uses a PAT with properly scoped permissions https://github.com/actions-runner-controller/actions-runner-controller#deploying-using-pat-authentication
   GH_TOKEN = "TOKEN"

@@ -103,6 +103,8 @@ Usage:
 
 The [az_aks_cluster_arc](#az_aks_cluster_arc) is used to build an Azure Managed Kubernetes Service cluster and then deploy [Actions Runner Controller](https://github.com/actions-runner-controller/actions-runner-controller)(ARC).  This example will create an ARC deployment and register a Webhook on the target Organization(s).
 
+**Currently only works with GitHub Enterprise Server(GHES)**
+
   ```mermaid
   graph
   subgraph AKS
